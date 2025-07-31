@@ -86,7 +86,7 @@ exports.loginUser = async (req, res) => {
         res.cookie('token', token, {
             httpOnly: true, // The cookie cannot be accessed by client-side JavaScript
             secure: process.env.NODE_ENV === 'production', // Use secure cookies in production (requires HTTPS)
-            sameSite: 'strict', // Mitigates CSRF attacks
+            sameSite: 'None', //for cross-site requests
             maxAge: 60 * 60 * 1000 // 1 hour expiration, should match token
         });
 
@@ -109,7 +109,7 @@ exports.verifyUser = async(req, res) =>{
     try {
         // 1. Get the token from the cookies sent by the browser
         const token = req.cookies.token;
-
+        console.log("Token received:", token);
         // If no token is found, the user is not logged in
         if (!token) {
             return res.status(401).json({ success: false, message: 'Not authenticated' });
