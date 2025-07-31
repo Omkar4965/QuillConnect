@@ -17,11 +17,17 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    // or if the origin is in our allowed list.
+    // Log the incoming origin for debugging purposes
+    console.log('Incoming CORS Origin:', origin);
+
+    // Allow requests with no origin (like mobile apps, curl requests, or same-origin requests
+    // where the browser might not send an Origin header).
+    // Also allow if the origin is explicitly in our allowed list.
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
+      // If the origin is not allowed, explicitly block it.
+      console.log('CORS Blocked: Origin not in allowed list:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
