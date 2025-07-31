@@ -46,36 +46,100 @@ exports.createUser = async (req, res) => {
     }
 }
 
+// const user = require('../models/user'); // Assuming your user model is in this path
+// const bcrypt = require('bcrypt');
+// const jwt = require('jsonwebtoken');
+
+// const user = require('../models/user');
+// const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+
 exports.loginUser = async (req, res) => {
     try {
-        const { email, password } = req.body;
-        const User = await user.findOne({ email: email });
-        console.log(User)
+        const { email, password } = req.body;   
 
-        // User not found
+        const User = await user.findOne({ email: email });
+
         if (!User) {
-            return res.status(404).json("User not found");
+            return res.status(404).json({ success: false, message: "User not found" });
         }
 
         const validPassword = await bcrypt.compare(password, User.password);
 
-        // Invalid password
         if (!validPassword) {
-            return res.status(400).json("Invalid Password");
+            return res.status(400).json({ success: false, message: "Invalid Password" });
         }
 
-        // Successful login
+        const payload = {
+            id: User._id,
+            email: User.email
+        };
+
+        const token = jwt.sign(
+            payload,
+            process.env.JWT_SECRET || 'YOUR_DEFAULT_SECRET_KEY',
+            { expiresIn: '1h' }
+        );
+
+        // --- NEW COOKIE LOGIC ---
+        // Set the token in an httpOnly cookie instead of the response body.
+        res.cookie('token', token, {
+            httpOnly: true, // The cookie cannot be accessed by client-side JavaScript
+            secure: process.env.NODE_ENV === 'production', // Use secure cookies in production (requires HTTPS)
+            sameSite: 'strict', // Mitigates CSRF attacks
+            maxAge: 60 * 60 * 1000 // 1 hour expiration, should match token
+        });
+
+        // Send a success response without the token in the body
         return res.status(200).json({
             success: true,
             message: "User logged in successfully",
-            data: User._id
+            data: {
+                userId: User._id
+            }
         });
+
     } catch (err) {
-        // Error handling
-        return res.status(500).json(err);
+        console.error(err);
+        return res.status(500).json({ success: false, message: "An internal server error occurred." });
     }
 };
 
+exports.verifyUser = async(req, res) =>{
+    try {
+        // 1. Get the token from the cookies sent by the browser
+        const token = req.cookies.token;
+
+        // If no token is found, the user is not logged in
+        if (!token) {
+            return res.status(401).json({ success: false, message: 'Not authenticated' });
+        }
+
+        // 2. Verify the token using your JWT_SECRET
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        // 3. The token is valid, find the user from the database
+        // We select '-password' to exclude the password hash from the response
+        const currentUser = await user.findById(decoded.id).select('-password');
+
+        if (!currentUser) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        // 4. Send the user data back to the frontend
+        res.status(200).json({
+            success: true,
+            message: 'User verified successfully',
+            data: currentUser
+        });
+
+    } catch (err) {
+        // If jwt.verify fails, it will throw an error (e.g., token expired)
+        console.error("Verification error:", err.message);
+        return res.status(401).json({ success: false, message: 'Invalid token' });
+    }
+
+}
 exports.updateUser = async(req, res) => {
     try{
         const {id} = req.params;
