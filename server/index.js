@@ -6,11 +6,28 @@ const bodyParser = require('body-parser');
 require('dotenv').config();
 
 // --- CORRECT CORS CONFIGURATION ---
-// This configuration explicitly allows your frontend (running on port 3001)
-// to send requests with credentials (cookies).
+// This configuration explicitly allows your frontend (running on port 3001 locally)
+// and your deployed Vercel frontend URLs to send requests with credentials (cookies).
+const allowedOrigins = [
+  'http://localhost:3001', // For local development
+  'https://quill-connect-git-main-omkar4965s-projects.vercel.app', // Your deployed frontend URL
+  'https://quill-connect-m2dr.vercel.app' // Your deployed backend URL (if it also makes requests to itself or is the primary domain)
+  // Add any other production domains for your frontend here if they exist
+];
+
 const corsOptions = {
-  origin: 'http://localhost:3001', // Your React app's origin
-  credentials: true,
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    // or if the origin is in our allowed list.
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true, // Important for sending cookies/authentication headers
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', // Specify allowed HTTP methods
+  optionsSuccessStatus: 204 // For preflight requests, respond with 204 No Content
 };
 
 // --- MIDDLEWARE SETUP ---
@@ -19,7 +36,7 @@ app.use(cors(corsOptions));
 
 // Other middleware
 app.use(bodyParser.json());
-app.use(cookieParser()); // You only need to call this once.
+app.use(cookieParser());
 
 // --- DATABASE CONNECTION ---
 const { dbConnect } = require('./config/database');
