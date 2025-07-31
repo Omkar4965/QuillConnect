@@ -15,7 +15,7 @@ const LoginPage = () => {
         headers: { 'Content-Type': 'application/json' },
       });
 
-      localStorage.setItem('userId', JSON.stringify(response.data.data));
+      // localStorage.setItem('token', JSON.stringify(response.data.data));
 
       toast({
         title: 'Logged in successfully.',

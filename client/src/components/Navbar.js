@@ -55,7 +55,8 @@ export default function Navbar() {
     setSearchTerm(value);
     if (value.length > 0) {
       const filtered = allUsers.filter((user) =>
-        user.username.toLowerCase().includes(value.toLowerCase())
+        // Safely access username and convert to lowercase
+        user.username?.toLowerCase().includes(value.toLowerCase())
       );
       setSuggestions(filtered.slice(0, 5));
     } else {

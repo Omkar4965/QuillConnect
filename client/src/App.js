@@ -1,61 +1,60 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import axios from 'axios'; // <--- ADD THIS LINE BACK
+
+// Import your pages and context
 import Home from './pages/home';
 import Profile from './pages/profile';
 import LoginPage from './pages/login';
 import RegisterPage from './pages/register';
 import NoPage from './pages/NoPage';
 import EditDetails from './pages/editDetails';
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { UserContext } from './context/UserContext'; // Assuming you're using UserContext for user data
-import Messenger from './pages/messenger'
-import { useEffect, useState } from 'react';
-import axios from 'axios';
+import Messenger from './pages/messenger';
 import BookmarkPage from './pages/bookmark';
+import { UserContext } from './context/UserContext';
 
 function App() {
-  const selfUserId = useContext(UserContext).userId;
-  console.log("userId", selfUserId)
-  const [user, setUser] = useState(null); // State to hold user data
+  const { userId } = useContext(UserContext); // Destructure userId directly
+  const [user, setUser] = useState(null);
 
-  useEffect(() => { 
-    if (selfUserId != null) {
+  useEffect(() => {
+    // Check if userId exists before fetching
+    if (userId) {
       const fetchUser = async () => {
         try {
-          console.log("Process.env",process.env.R)
-          const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/user/getUser/${selfUserId}`);
+          // The axios.get call requires axios to be imported in this file
+          const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/user/getUser/${userId}`);
           setUser(response.data.data);
         } catch (err) {
           console.error("Error fetching user:", err);
+          // Handle error, e.g., clear user data or show a notification
         }
       };
       fetchUser();
     }
-  }, [selfUserId]);
+  }, [userId]); // Dependency array is correct
+
   return (
-   
     <BrowserRouter>
       <Routes>
-        {/* Home page */}
-        <Route path="/" element={<Home />} />
+        {/* Pass the fetched user data to the Home and Profile components */}
+        <Route path="/" element={<Home user={user} />} />
         
-        {/* Profile routes: 
-            - /profile for current user 
-            - /profile/:id for other users */}
+        {/* Pass the fetched user data to the main profile route */}
         <Route 
           path="/profile" 
-          element={ <Profile user={user} />} // Current user profile
+          element={<Profile user={user} />} 
         />
-        <Route path="/profile/:id" element={<Profile />} /> {/* Other user profile */}
+        {/* This route is for viewing other users' profiles */}
+        <Route path="/profile/:id" element={<Profile />} />
         
         {/* Login and Register */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
-        <Route path='/editDetails' element={<EditDetails/>} />
-
-        <Route path='/messenger' element={ <Messenger/>} />
-
-        <Route path='/bookmarks' element={ <BookmarkPage/>} />
+        <Route path='/editDetails' element={<EditDetails user={user} />} />
+        <Route path='/messenger' element={<Messenger user={user} />} />
+        <Route path='/bookmarks' element={<BookmarkPage />} />
         
         {/* No match route */}
         <Route path="*" element={<NoPage />} />
