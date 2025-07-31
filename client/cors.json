@@ -1,9 +1,12 @@
 [
-    {
-      "origin": ["http://localhost:3001"],
-      "method": ["GET", "POST", "PUT"],
-      "maxAgeSeconds": 3600,
-      "responseHeader": ["Content-Type", "Authorization"]
-    }
-  ]
-  
+  {
+    "origin": [
+      "http://localhost:3001",
+      "https://quill-connect-git-main-omkar4965s-projects.vercel.app",
+      "https://quill-connect-m2dr.vercel.app"
+    ],
+    "method": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    "maxAgeSeconds": 3600,
+    "responseHeader": ["Content-Type", "Authorization", "Set-Cookie"]
+  }
+]
